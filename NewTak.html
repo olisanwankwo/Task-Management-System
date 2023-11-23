@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Manager</title>
+</head>
+<body>
+
+<div>
+    <h2>Task Manager</h2>
+    <ul id="taskList"></ul>
+    <label for="newTask">New Task:</label>
+    <input type="text" id="newTask" placeholder="Task name">
+    <label for="dueDate">Due Date:</label>
+    <input type="date" id="dueDate">
+    <label for="category">Category:</label>
+    <input type="text" id="category" placeholder="Category name">
+    <button onclick="addTask()">Add Task</button>
+</div>
+
+<script>
+    const tasksData = [
+        // Sample data
+    ];
+
+    function saveTasksToLocalStorage(tasks) {
+        localStorage.setItem('tasks', JSON.stringify(tasks));
+    }
+
+    function getTasksFromLocalStorage() {
+        const storedTasks = localStorage.getItem('tasks');
+        return storedTasks ? JSON.parse(storedTasks) : [];
+    }
+
+    let tasks = getTasksFromLocalStorage();
+
+    function displayTasks() {
+        const taskList = document.getElementById('taskList');
+        taskList.innerHTML = '';
+
+        tasks.forEach(category => {
+            const categoryItem = document.createElement('li');
+            categoryItem.innerHTML = `<strong>${category.category_name}</strong>`;
+            taskList.appendChild(categoryItem);
+
+            category.tasks.forEach(task => {
+                const taskItem = document.createElement('li');
+                taskItem.innerHTML = `${task.task_name} - Status: ${task.status ? 'Completed' : 'Incomplete'}, Due Date: ${task.due_date || 'Not specified'}`;
+                taskItem.classList.add(task.status ? 'completed' : 'incomplete');
+                taskItem.onclick = () => toggleTaskStatus(category, task);
+                categoryItem.appendChild(taskItem);
+            });
+        });
+    }
+
+    function addTask() {
+        const newTaskInput = document.getElementById('newTask');
+        const newTaskName = newTaskInput.value.trim();
+        const dueDateInput = document.getElementById('dueDate');
+        const dueDate = dueDateInput.value;
+        const categoryInput = document.getElementById('category');
+        const categoryName = categoryInput.value.trim();
+
+        if (newTaskName !== '' && categoryName !== '') {
+            const newTask = {
+                task_id: generateTaskId(),
+                task_name: newTaskName,
+                status: false,
+                due_date: dueDate || '',
+            };
+
+            // Check if the category already exists
+            let categoryIndex = tasks.findIndex(category => category.category_name === categoryName);
+
+            // If the category does not exist, create a new category
+            if (categoryIndex === -1) {
+                const newCategory = {
+                    category_id: generateTaskId(),
+                    category_name: categoryName,
+                    tasks: [newTask],
+                };
+                tasks.push(newCategory);
+            } else {
+                // If the category exists, add the task to that category
+                tasks[categoryIndex].tasks.push(newTask);
+            }
+
+            saveTasksToLocalStorage(tasks);
+            displayTasks();
+            newTaskInput.value = '';
+            dueDateInput.value = '';
+            categoryInput.value = '';
+        }
+    }
+
+    function toggleTaskStatus(category, task) {
+        task.status = !task.status;
+        saveTasksToLocalStorage(tasks);
+        displayTasks();
+    }
+
+    function generateTaskId() {
+        return '_' + Math.random().toString(36).substr(2, 9);
+    }
+
+    displayTasks();
+</script>
+
+<style>
+    ul {
+        list-style-type: none;
+        padding: 0;
+    }
+
+    li {
+        margin: 5px 0;
+        cursor: pointer;
+    }
+
+    .completed {
+        text-decoration: line-through;
+    }
+</style>
+
+</body>
+</html>
